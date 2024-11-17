@@ -1,51 +1,62 @@
 # pip-clean
+This is AI generated, may not be 100% accurate.
 
-**pip-clean** is a utility to help Python developers identify and clean unused dependencies from their `requirements.txt` file. It analyzes the imports in your codebase and compares them against the packages listed in `requirements.txt`, making it easier to maintain a lean and secure dependency list.
+**pip-clean** is a Python tool for identifying unused dependencies in your project. It analyzes your project's manifest file (e.g., `Pipfile`, `requirements.txt`) and compares it with the actual imports used in your Python code. The tool helps keep your dependency list lean and secure by highlighting dependencies that can be removed.
 
 ## Features
 
-- Analyze Python Imports: Uses the Python Abstract Syntax Tree (AST) to extract all imports used in your project.
-- Compare Against `requirements.txt`: Identifies unused dependencies by cross-referencing the imports with the packages listed in `requirements.txt`.
-- Streamline Dependencies: Helps keep your project free of unnecessary dependencies, improving security and reducing potential attack surfaces.
-- Easy to Use: Simple command-line interface for quick integration into your workflow.
-
-## Installation
-
-Clone the repository:
-
-git clone https://github.com/yourusername/pip-clean.git  
-cd pip-clean
-
-Make the script executable (optional):
-
-chmod +x pip-clean.py
+- Support for Multiple Manifest Types: Works with `Pipfile` (beta), `requirements.txt` (experimental), and `pyproject.toml` (coming soon).
+- Accurate Analysis: Cross-references the dependencies in your manifest with actual imports in your Python files.
+- Simple CLI Interface: Easy-to-use command-line tool for efficient dependency management.
 
 ## Usage
 
-Run the script with the following options:
+1. Clone the repository:  
+   `git clone https://github.com/yourusername/pip-clean.git`  
+   `cd pip-clean`  
 
-python pip-clean.py -r requirements.txt -t /path/to/python/project
+Run the tool using the following format:  
+`uv run python pip_clean/clean.py <manifest_type> -m <manifest_file> -t <target_directory>`
 
 ### Arguments
-- `-r`, `--requirements`: Path to your `requirements.txt` file.
-- `-t`, `--target`: Root directory of your Python project.
+
+- `<manifest_type>`: The type of manifest file to analyze. Supported values are:
+  - `Pipfile` (beta)
+  - `requirements.txt` (experimental)
+  - `pyproject.toml` (coming soon)
+- `-m`, `--manifest`: Path to the manifest file (e.g., `Pipfile` or `requirements.txt`).
+- `-t`, `--target`: Path to the root directory of your Python project containing the codebase to analyze.
 
 ### Example
 
-Analyze a project in the `my_project/` directory with a `requirements.txt` file:
-
-python pip-clean.py -r requirements.txt -t my_project/
+To analyze a project using a `Pipfile` located at `/tmp/projects/example`:  
+`uv run python pip_clean/clean.py pipfile -m /tmp/projects/example/Pipfile -t /tmp/projects/example/`
 
 ### Output
 
-The script will:
-1. Parse the `requirements.txt` file and collect all explicitly listed dependencies.
-2. Analyze your Python codebase to extract all imported modules.
-3. Compare the two lists and identify unused dependencies.
-4. Print the results, showing which dependencies can be safely removed.
+- **Unused Dependencies**: The tool will list any dependencies in the manifest file that are not used in the codebase. For example:  
+  `Unused dependencies:`  
+  `- flask`  
+  `- requests`
 
-### Example Output
+- **No Unused Dependencies**: If all dependencies are in use, it will output:  
+  `No unused dependencies found.`
 
-Requirements from requirements.txt: {'requests', 'numpy', 'pandas'}  
-Code dependencies from source files: {'requests', 'pandas'}  
-Unused dependencies: {'numpy'}
+## Known Limitations
+
+While `pip-clean` is a helpful tool, there are some limitations to be aware of:
+
+1. **Mismatch Between Package and Import Names**: Some Python packages are installed with a name that differs from the one used to import them in code. For example:
+   - Package name: `python-dateutil`
+   - Import name: `dateutil`
+   This can result in false positives where a dependency is marked as unused because its import name doesn’t directly match the package name.
+
+2. **Dynamic Imports**: The tool does not detect dynamically generated imports, such as those created using `importlib` or `__import__`. These imports might not be visible in the static analysis.
+
+3. **Indirect Dependencies**: Dependencies that are imported indirectly (e.g., through another library) are not analyzed. The tool focuses only on imports explicitly used in your code. Pip-clean expects `requirements.txt` and `Pipfile` files to include direct dependencies only. Dev dependencies and other non-production dependencies are also ignored.
+
+4. **Manifest Type Limitations**: Currently, `Pipfile` is the most stable format supported. Analysis for `requirements.txt` is experimental, and support for `pyproject.toml` is planned but not yet implemented.
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request if you have suggestions or improvements.
