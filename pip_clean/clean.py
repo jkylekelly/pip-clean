@@ -1,6 +1,6 @@
 import argparse
 from packaging.utils import NormalizedName, canonicalize_name
-# from supported_manifests.requirements import get_requirements_deps
+from supported_manifests.requirements import get_requirements_deps
 from supported_manifests.pipfile import get_pipfile_deps
 
 import os
@@ -29,24 +29,41 @@ def get_code_deps(pyfiles: set[str]) -> set[NormalizedName]:
 
         for node in ast.walk(root):
             if isinstance(node, ast.Import):
+                print(canonicalize_name(node.names[0].name))
                 imports.add(canonicalize_name(node.names[0].name))
             elif isinstance(node, ast.ImportFrom):
-                imports.add(canonicalize_name(node.module))
+                # print(canonicalize_name(node.module))
+                if node.module is not None:
+                    imports.add(canonicalize_name(node.module))
 
     return imports
 
 
-def clean_deps(manifest_file: str, source_dir: str) -> bool:
+def clean_deps(manifest_type, manifest_file: str, source_dir: str) -> bool:
     # get a list of package names from the requirements.txt
     # requirements_deps = get_requirements_deps(manifest_file)
-    pipfile_deps = get_pipfile_deps(manifest_file)
+    if manifest_type == 'requirements.txt':
+        manifest_deps = get_requirements_deps(manifest_file)
+    
+    elif manifest_type == 'pipfile':
+        manifest_deps = get_pipfile_deps(manifest_file)
+    
+    else:
+        print("not yet supported")
 
     # get package names used in code based on ASTs
     pyfiles = get_pyfiles(source_dir)
     code_deps = get_code_deps(pyfiles)
 
-    missing = list(sorted(pipfile_deps - code_deps))
 
+    # Print missing dependencies
+    missing = list(sorted(manifest_deps - code_deps))
+    if missing:
+        print("Unused dependencies:")
+        for dep in missing:
+            print(f"- {dep}")
+    else:
+        print("No missing dependencies found.")
 
 def validate_type(manifest_type):
     value_lower = manifest_type.lower()
@@ -74,7 +91,7 @@ def main():
 
     args = parser.parse_args()
 
-    clean_deps(args.manifest, args.target)
+    clean_deps(args.manifest_type, args.manifest, args.target)
 
 
 if __name__ == "__main__":
