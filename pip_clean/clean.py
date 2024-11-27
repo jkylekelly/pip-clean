@@ -5,6 +5,8 @@ from supported_manifests.requirements import get_requirements_deps
 from supported_manifests.pipfile import get_pipfile_deps
 import os
 import ast
+from packages_distributions.packages_distributions import run_in_docker, prepare_target_directory
+
 
 # Initialize logging
 logging.basicConfig(
@@ -62,6 +64,9 @@ def clean_deps(manifest_type, manifest_file: str, source_dir: str) -> list[str]:
         manifest_deps = get_requirements_deps(manifest_file)
     elif manifest_type == "pipfile":
         manifest_deps = get_pipfile_deps(manifest_file)
+        prepare_target_directory("../test")
+        output = run_in_docker()
+        print(output)
     else:
         logger.error("Unsupported manifest type: %s", manifest_type)
         raise ValueError(f"Unsupported manifest type: {manifest_type}")
