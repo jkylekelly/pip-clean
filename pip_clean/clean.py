@@ -5,6 +5,8 @@ from supported_manifests.requirements import get_requirements_deps
 from supported_manifests.pipfile import get_pipfile_deps
 import os
 import ast
+from packages_distributions.packages_distributions import run_in_docker, prepare_target_directory, manifest_to_import_names
+
 
 # Initialize logging
 logging.basicConfig(
@@ -62,6 +64,14 @@ def clean_deps(manifest_type, manifest_file: str, source_dir: str) -> list[str]:
         manifest_deps = get_requirements_deps(manifest_file)
     elif manifest_type == "pipfile":
         manifest_deps = get_pipfile_deps(manifest_file)
+        prepare_target_directory(source_dir)
+        module_mapping = run_in_docker()
+        print(manifest_deps)
+        print(module_mapping)
+        manifest_deps = manifest_to_import_names(manifest_deps, module_mapping)
+        print(manifest_deps)
+        
+
     else:
         logger.error("Unsupported manifest type: %s", manifest_type)
         raise ValueError(f"Unsupported manifest type: {manifest_type}")
@@ -69,9 +79,14 @@ def clean_deps(manifest_type, manifest_file: str, source_dir: str) -> list[str]:
     logger.info("Manifest contains %d dependencies", len(manifest_deps))
     pyfiles = get_pyfiles(source_dir)
     code_deps = get_code_deps(pyfiles)
-
+    print(code_deps)
     # Calculate unused dependencies
-    unused_deps = list(sorted(manifest_deps - code_deps))
+    # unused_deps = list(sorted(manifest_deps - code_deps))
+    unused_deps = []
+    for package, modules in manifest_deps:
+        # Check if neither the package nor any of its associated modules are in code_deps
+        if package not in code_deps and not modules.intersection(code_deps):
+            unused_deps.append(package)
     return unused_deps
 
 
