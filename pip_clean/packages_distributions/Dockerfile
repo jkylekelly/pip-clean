@@ -17,4 +17,4 @@ RUN pip install pipenv
 RUN pipenv install
 
 # Specify the script to run
-CMD ["pipenv", "run", "python", "/app/test.py"]
+CMD ["pipenv", "run", "python", "-c", "from importlib.metadata import packages_distributions; print(packages_distributions())"]
